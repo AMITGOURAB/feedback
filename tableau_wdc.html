@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Feedback Data Connector</title>
+    <script src="https://connectors.tableau.com/libs/tableauwdc-2.3.latest.js"></script>
+    <script>
+        (function() {
+            var myConnector = tableau.makeConnector();
+            
+            myConnector.getSchema = function(schemaCallback) {
+                var cols = [
+                    { id: "id", alias: "ID", dataType: tableau.dataTypeEnum.int },
+                    { id: "name", alias: "Name", dataType: tableau.dataTypeEnum.string },
+                    { id: "email", alias: "Email", dataType: tableau.dataTypeEnum.string },
+                    { id: "rating", alias: "Rating", dataType: tableau.dataTypeEnum.int },
+                    { id: "comments", alias: "Comments", dataType: tableau.dataTypeEnum.string },
+                    { id: "submission_date", alias: "Submission Date", dataType: tableau.dataTypeEnum.datetime }
+                ];
+                
+                var tableSchema = {
+                    id: "feedback",
+                    columns: cols
+                };
+                schemaCallback([tableSchema]);
+            };
+            
+            myConnector.getData = function(table, doneCallback) {
+                fetch("http://localhost:5000/api/feedback")
+                    .then(response => response.json())
+                    .then(data => {
+                        table.appendRows(data);
+                        doneCallback();
+                    })
+                    .catch(error => {
+                        console.error("Error fetching data:", error);
+                        doneCallback();
+                    });
+            };
+            
+            tableau.registerConnector(myConnector);
+            
+            document.getElementById("submitButton").addEventListener("click", function() {
+    if (tableau.connectionName) {
+        tableau.connectionName = "Feedback Data";  // Required
+        tableau.submit();  // Explicitly submit
+    } else {
+        console.error("Tableau WDC library not loaded!");
+    }
+});
+        })();
+    </script>
+</head>
+<body>
+    <h1>Feedback Data Connector</h1>
+    <button id="submitButton">Load Feedback Data into Tableau</button>
+</body>
+</html>
